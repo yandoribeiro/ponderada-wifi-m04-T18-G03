@@ -4,33 +4,19 @@ Este projeto tem como propósito monitorar, de forma contínua, a Potência do S
 
 A atividade se encerra com um experimento que simula o efeito de uma Gaiola de Faraday em um ambiente controlado, no caso, o elevador do Inteli. Durante a execução, registra-se a queda abrupta do sinal Wi-Fi (em dBm) e sua posterior recuperação, resultando em um gráfico contínuo que evidencia claramente o comportamento do sinal.
 
-**Uso e Configuração do Mosquitto Broker**
+## Instalação e Execução (Local)
 
-O Mosquitto atua como o Broker MQTT, o intermediário que recebe as mensagens do ESP32 (Publisher) e as envia para o Dashboard Python (Subscriber).
+Para utilizar o Mosquitto localmente, é necessário instalá-lo e executá-lo como um serviço no computador, assegurando que esteja ativo e ouvindo na porta padrão 1883.
 
-📝 Documentação do Projeto IoT: Monitoramento de Sinal Wi-Fi (RSSI) com ESP32 e MQTT
-1. 💡 Contexto da Atividade
-Este projeto tem como objetivo principal monitorar a Potência do Sinal de Rádio (RSSI) de uma rede Wi-Fi específica, utilizando um microcontrolador ESP32, e publicar esses dados em tempo real em uma plataforma de visualização através do protocolo MQTT (Message Queuing Telemetry Transport).
+Instalação (Windows/macOS/Linux):
+A instalação deve seguir as orientações fornecidas na documentação oficial do Mosquitto, de acordo com o sistema operacional utilizado.
 
-A atividade culmina na realização de um experimento para simular o efeito da Gaiola de Faraday em um ambiente controlado (o elevador do Inteli), registrando a queda abrupta e posterior recuperação do sinal Wi-Fi (dBm) em um gráfico contínuo.
+Execução:
+Após a instalação, verifique se o serviço do Mosquitto está em execução. Uma vez ativo, o broker ficará responsável por receber e encaminhar as conexões dos clientes — neste caso, o ESP32 e o dashboard — pela porta 1883.
 
-Shutterstock
-Explorar
+**Teste de Conectividade:**
 
-2. ⚙️ Uso e Configuração do Mosquitto Broker (Local)
-O Mosquitto atua como o Broker MQTT, o intermediário que recebe as mensagens do ESP32 (Publisher) e as envia para o Dashboard Python (Subscriber).
-
-Instalação e Execução (Local):
-
-O Mosquitto deve ser instalado e iniciado como um serviço no seu computador, garantindo que ele esteja escutando na porta padrão 1883.
-
-Instalação (Windows/macOS/Linux): Siga as instruções específicas para o seu sistema operacional na documentação oficial do Mosquitto.
-
-Execução: Após a instalação, garanta que o serviço Mosquitto esteja rodando. O broker escutará as conexões de clientes (ESP32 e Dashboard) na porta 1883.
-
-Teste de Conectividade:
-
-Use as ferramentas de linha de comando do Mosquitto (mosquitto_sub e mosquitto_pub) para confirmar que o broker está funcionando.
+Para confirmar que o broker está funcionando corretamente, utilize as ferramentas de linha de comando fornecidas pelo Mosquitto, como mosquitto_sub e mosquitto_pub, que permitem testar a publicação e a assinatura de tópicos.
 
 ```
 # Terminal 1: Assinante (Simula o Dashboard recebendo dados)
@@ -40,110 +26,111 @@ mosquitto_sub -h localhost -t /inteli/esp32/sinal_wifi
 mosquitto_pub -h localhost -t /inteli/esp32/sinal_wifi -m "-55"
 ```
 
-📝 Documentação do Projeto IoT: Monitoramento de Sinal Wi-Fi (RSSI) com ESP32 e MQTT
-1. 💡 Contexto da Atividade
-Este projeto tem como objetivo principal monitorar a Potência do Sinal de Rádio (RSSI) de uma rede Wi-Fi específica, utilizando um microcontrolador ESP32, e publicar esses dados em tempo real em uma plataforma de visualização através do protocolo MQTT (Message Queuing Telemetry Transport).
+## Código utilizado
 
-A atividade culmina na realização de um experimento para simular o efeito da Gaiola de Faraday em um ambiente controlado (o elevador do Inteli), registrando a queda abrupta e posterior recuperação do sinal Wi-Fi (dBm) em um gráfico contínuo.
-
-Shutterstock
-Explorar
-
-2. ⚙️ Uso e Configuração do Mosquitto Broker (Local)
-O Mosquitto atua como o Broker MQTT, o intermediário que recebe as mensagens do ESP32 (Publisher) e as envia para o Dashboard Python (Subscriber).
-
-Instalação e Execução (Local):
-
-O Mosquitto deve ser instalado e iniciado como um serviço no seu computador, garantindo que ele esteja escutando na porta padrão 1883.
-
-Instalação (Windows/macOS/Linux): Siga as instruções específicas para o seu sistema operacional na documentação oficial do Mosquitto.
-
-Execução: Após a instalação, garanta que o serviço Mosquitto esteja rodando. O broker escutará as conexões de clientes (ESP32 e Dashboard) na porta 1883.
-
-Teste de Conectividade:
-
-Use as ferramentas de linha de comando do Mosquitto (mosquitto_sub e mosquitto_pub) para confirmar que o broker está funcionando.
-
-Bash
-
-# Terminal 1: Assinante (Simula o Dashboard recebendo dados)
-mosquitto_sub -h localhost -t /inteli/esp32/sinal_wifi
-
-# Terminal 2: Publicador (Simula o ESP32 enviando um dado)
-mosquitto_pub -h localhost -t /inteli/esp32/sinal_wifi -m "-55"
-3. 🤖 Código do ESP32 (C++ com POO e Ponteiros)
-O código da ESP32 foi desenvolvido com Programação Orientada a Objetos (POO) e utiliza um ponteiro para a instância do cliente MQTT, encapsulando a lógica de conectividade e publicação.
+O código desenvolvido para o ESP32 segue uma abordagem de Programação Orientada a Objetos (POO), utilizando um ponteiro para gerenciar a instância do cliente MQTT. Essa estrutura permite encapsular de forma organizada toda a lógica relacionada à conexão com a rede Wi-Fi, ao gerenciamento do cliente MQTT e ao processo de publicação das medições.
 
 ``` jsx
 #include <WiFi.h>
-#include <PubSubClient.h> // Biblioteca para MQTT
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
 
-// --- Configurações Estáticas ---
-const char* WIFI_SSID = "SUA_REDE_WIFI";       
-const char* WIFI_PASSWORD = "SUA_SENHA_WIFI";   
-const char* MQTT_SERVER = "192.168.1.100";      // << AJUSTE ESTE IP (ou use o IP local do seu PC)
+const char *WIFI_SSID = "Inteli.Iot"; 
+const char *WIFI_PASS = "%(Yk(sxGMtvFEs.3";
+const char* MQTT_SERVER = "10.128.0.5";
 const int MQTT_PORT = 1883;
 const char* MQTT_CLIENT_ID = "ESP32_RSSI_Client_POO";
-const char* MQTT_TOPIC_PUBLISH = "/inteli/esp32/sinal_wifi"; 
-const long PUBLISH_INTERVAL_MS = 1000; 
+
+const char* MQTT_TOPIC_PUBLISH = "inteli/esp32/sinal_wifi";
+
+const long PUBLISH_INTERVAL_MS = 1000;
 
 WiFiClient espClient;
 
 class RssiMqttClient {
 private:
-    // Ponteiro para o cliente MQTT
-    PubSubClient* mqttClient; 
+    PubSubClient* mqttClient;
     long lastPublishTime = 0;
-    
-    // ... [Métodos de Conexão e Reconexão OMITIDOS para brevidade]
+
+    void connectWiFi() {
+        Serial.print("Conectando a ");
+        Serial.println(WIFI_SSID);
+        WiFi.begin(WIFI_SSID, WIFI_PASS);
+
+        while (WiFi.status() != WL_CONNECTED) {
+            delay(500);
+            Serial.print(".");
+        }
+
+        Serial.println("\nWiFi conectado!");
+        Serial.print("IP: ");
+        Serial.println(WiFi.localIP());
+    }
+
+    void reconnectMQTT() {
+        while (!mqttClient->connected()) {
+            Serial.print("Conectando ao MQTT...");
+            if (mqttClient->connect(MQTT_CLIENT_ID)) {
+                Serial.println("conectado!");
+            } else {
+                Serial.print("falhou, rc=");
+                Serial.println(mqttClient->state());
+                delay(3000);
+            }
+        }
+    }
 
 public:
-    // Construtor: Aloca o objeto MQTT via ponteiro
     RssiMqttClient(WiFiClient& client) {
-        mqttClient = new PubSubClient(client); 
+        mqttClient = new PubSubClient(client);
         Serial.begin(115200);
+        delay(10);
     }
-    
-    // Destrutor: Libera a memória do ponteiro
+
     ~RssiMqttClient() {
         delete mqttClient;
-        mqttClient = nullptr;
     }
 
     void begin() {
-        // Lógica de connectWiFi() aqui
-        // ...
+        connectWiFi();
         mqttClient->setServer(MQTT_SERVER, MQTT_PORT);
     }
 
     void handleLoop() {
-        // Lógica de reconnectMQTT() e loop do MQTT aqui
-        // ...
-        
+        if (!mqttClient->connected()) {
+            reconnectMQTT();
+        }
+
+        mqttClient->loop();
+
         long now = millis();
         if (now - lastPublishTime > PUBLISH_INTERVAL_MS) {
             lastPublishTime = now;
             publishRssi();
         }
     }
-    
+
     void publishRssi() {
-        long rssi_dbm = WiFi.RSSI();
-        String payload = String(rssi_dbm);
-        
-        Serial.print("Potência (dBm): ");
+        long rssi = WiFi.RSSI();
+
+        StaticJsonDocument<100> doc;
+        doc["rssi"] = rssi;
+
+        String payload;
+        serializeJson(doc, payload);
+
+        Serial.print("Enviando JSON: ");
         Serial.println(payload);
 
-        // Uso do ponteiro -> para publicar
         if (mqttClient->publish(MQTT_TOPIC_PUBLISH, payload.c_str())) {
-            Serial.println("MQTT Publicado.");
+            Serial.println("Publicado!");
         } else {
-            Serial.println("Falha na publicação.");
+            Serial.println("Falha ao publicar!");
         }
     }
 };
 
-RssiMqttClient rssiClient(espClient); 
+RssiMqttClient rssiClient(espClient);
 
 void setup() {
     rssiClient.begin();
@@ -154,202 +141,134 @@ void loop() {
 }
 ```
 
-📝 Documentação do Projeto IoT: Monitoramento de Sinal Wi-Fi (RSSI) com ESP32 e MQTT
-1. 💡 Contexto da Atividade
-Este projeto tem como objetivo principal monitorar a Potência do Sinal de Rádio (RSSI) de uma rede Wi-Fi específica, utilizando um microcontrolador ESP32, e publicar esses dados em tempo real em uma plataforma de visualização através do protocolo MQTT (Message Queuing Telemetry Transport).
+## Dashboard
 
-A atividade culmina na realização de um experimento para simular o efeito da Gaiola de Faraday em um ambiente controlado (o elevador do Inteli), registrando a queda abrupta e posterior recuperação do sinal Wi-Fi (dBm) em um gráfico contínuo.
+O dashboard foi desenvolvido em Python utilizando duas bibliotecas principais: Paho-MQTT, responsável por subscrever e receber os dados publicados pelo ESP32, e Plotly Dash, utilizada para construir a visualização gráfica da série temporal, atualizada automaticamente a cada 2 segundos.
 
-Shutterstock
-Explorar
-
-2. ⚙️ Uso e Configuração do Mosquitto Broker (Local)
-O Mosquitto atua como o Broker MQTT, o intermediário que recebe as mensagens do ESP32 (Publisher) e as envia para o Dashboard Python (Subscriber).
-
-Instalação e Execução (Local):
-
-O Mosquitto deve ser instalado e iniciado como um serviço no seu computador, garantindo que ele esteja escutando na porta padrão 1883.
-
-Instalação (Windows/macOS/Linux): Siga as instruções específicas para o seu sistema operacional na documentação oficial do Mosquitto.
-
-Execução: Após a instalação, garanta que o serviço Mosquitto esteja rodando. O broker escutará as conexões de clientes (ESP32 e Dashboard) na porta 1883.
-
-Teste de Conectividade:
-
-Use as ferramentas de linha de comando do Mosquitto (mosquitto_sub e mosquitto_pub) para confirmar que o broker está funcionando.
-
-Bash
-
-# Terminal 1: Assinante (Simula o Dashboard recebendo dados)
-mosquitto_sub -h localhost -t /inteli/esp32/sinal_wifi
-
-# Terminal 2: Publicador (Simula o ESP32 enviando um dado)
-mosquitto_pub -h localhost -t /inteli/esp32/sinal_wifi -m "-55"
-3. 🤖 Código do ESP32 (C++ com POO e Ponteiros)
-O código da ESP32 foi desenvolvido com Programação Orientada a Objetos (POO) e utiliza um ponteiro para a instância do cliente MQTT, encapsulando a lógica de conectividade e publicação.
-
-C++
-
-#include <WiFi.h>
-#include <PubSubClient.h> // Biblioteca para MQTT
-
-// --- Configurações Estáticas ---
-const char* WIFI_SSID = "SUA_REDE_WIFI";       
-const char* WIFI_PASSWORD = "SUA_SENHA_WIFI";   
-const char* MQTT_SERVER = "192.168.1.100";      // << AJUSTE ESTE IP (ou use o IP local do seu PC)
-const int MQTT_PORT = 1883;
-const char* MQTT_CLIENT_ID = "ESP32_RSSI_Client_POO";
-const char* MQTT_TOPIC_PUBLISH = "/inteli/esp32/sinal_wifi"; 
-const long PUBLISH_INTERVAL_MS = 1000; 
-
-WiFiClient espClient;
-
-class RssiMqttClient {
-private:
-    // Ponteiro para o cliente MQTT
-    PubSubClient* mqttClient; 
-    long lastPublishTime = 0;
-    
-    // ... [Métodos de Conexão e Reconexão OMITIDOS para brevidade]
-
-public:
-    // Construtor: Aloca o objeto MQTT via ponteiro
-    RssiMqttClient(WiFiClient& client) {
-        mqttClient = new PubSubClient(client); 
-        Serial.begin(115200);
-    }
-    
-    // Destrutor: Libera a memória do ponteiro
-    ~RssiMqttClient() {
-        delete mqttClient;
-        mqttClient = nullptr;
-    }
-
-    void begin() {
-        // Lógica de connectWiFi() aqui
-        // ...
-        mqttClient->setServer(MQTT_SERVER, MQTT_PORT);
-    }
-
-    void handleLoop() {
-        // Lógica de reconnectMQTT() e loop do MQTT aqui
-        // ...
-        
-        long now = millis();
-        if (now - lastPublishTime > PUBLISH_INTERVAL_MS) {
-            lastPublishTime = now;
-            publishRssi();
-        }
-    }
-    
-    void publishRssi() {
-        long rssi_dbm = WiFi.RSSI();
-        String payload = String(rssi_dbm);
-        
-        Serial.print("Potência (dBm): ");
-        Serial.println(payload);
-
-        // Uso do ponteiro -> para publicar
-        if (mqttClient->publish(MQTT_TOPIC_PUBLISH, payload.c_str())) {
-            Serial.println("MQTT Publicado.");
-        } else {
-            Serial.println("Falha na publicação.");
-        }
-    }
-};
-
-RssiMqttClient rssiClient(espClient); 
-
-void setup() {
-    rssiClient.begin();
-}
-
-void loop() {
-    rssiClient.handleLoop();
-}
-4. 📊 Código do Dashboard em Python (Plotly Dash)
-O Dashboard usa as bibliotecas Paho-MQTT para subscrever os dados e Plotly Dash para criar a visualização do gráfico de série temporal, atualizando a cada 2 segundos. O MQTT_SERVER deve ser localhost se o Mosquitto estiver rodando localmente.
+Quando o Mosquitto é executado localmente, o parâmetro MQTT_SERVER deve ser configurado como localhost, garantindo que o dashboard se conecte corretamente ao broker.
 
 ``` jsx
-
-import dash
-from dash import dcc
-from dash import html
-from dash.dependencies import Output, Input
-import plotly.graph_objects as go
-import pandas as pd
-from collections import deque
+import json
 import paho.mqtt.client as mqtt
-import threading
+from collections import deque
+import dash
+from dash import dcc, html
+from dash.dependencies import Input, Output
 
-# --- Configurações do Broker ---
-MQTT_SERVER = "localhost" # Mosquitto está rodando localmente
-MQTT_PORT = 1883
-MQTT_TOPIC = "/inteli/esp32/sinal_wifi"
 
-# Deques para armazenar dados em tempo real
-MAX_DATA_POINTS = 300
-data_time = deque(maxlen=MAX_DATA_POINTS)
-data_rssi = deque(maxlen=MAX_DATA_POINTS)
+BROKER_IP = "10.128.0.5"
+BROKER_PORT = 1883
+TOPIC = "inteli/esp32/sinal_wifi"
 
-# --- Funções de Callback MQTT (on_connect, on_message) e Thread de Loop OMITIDAS ---
+# Armazena últimas 200 leituras de RSSI
+rssi_history = deque(maxlen=200)
 
-# Inicia o cliente MQTT em uma thread
-# mqtt_thread = threading.Thread(target=mqtt_loop)
-# mqtt_thread.daemon = True
-# mqtt_thread.start()
 
-# --- Configuração do Dashboard (Plotly Dash) ---
-app = dash.Dash(__name__)
+def on_connect(client, userdata, flags, rc):
+    print("Conectado ao broker:", rc)
+    client.subscribe(TOPIC)
 
-app.layout = html.Div(
-    children=[
-        html.H1("📊 Monitoramento de Sinal WiFi (RSSI) - ESP32/MQTT"),
-        dcc.Graph(id='live-rssi-graph'),
-        dcc.Interval(
-            id='interval-component',
-            interval=2*1000, # Atualiza o gráfico a cada 2 segundos
-            n_intervals=0
-        ),
-        html.Div(id='current-rssi-display')
-    ]
-)
+def on_message(client, userdata, msg):
+    try:
+        payload_str = msg.payload.decode("utf-8")
+        data = json.loads(payload_str)
 
-# --- Callback para Atualização do Gráfico ---
+        if "rssi" in data:
+            rssi_value = int(data["rssi"])
+            rssi_history.append(rssi_value)
+            print(f"RSSI recebido: {rssi_value}")
+
+    except Exception as e:
+        print("Erro ao processar JSON:", e)
+
+# Inicializa o cliente MQTT
+client = mqtt.Client(protocol=mqtt.MQTTv311)
+client.on_connect = on_connect
+client.on_message = on_message
+client.connect(BROKER_IP, BROKER_PORT)
+client.loop_start()
+
+
+app = dash.Dash(_name_)
+
+app.layout = html.Div([
+    html.H1("Dashboard de RSSI do ESP32", style={"textAlign": "center"}),
+
+    dcc.Graph(id="rssi-graph"),
+
+    dcc.Interval(
+        id="update-interval",
+        interval=1000,  # Atualiza a cada 1 segundo
+        n_intervals=0
+    ),
+
+    html.Div(id="last-value", style={"textAlign": "center", "fontSize": "24px"})
+])
+
 @app.callback(
-    [Output('live-rssi-graph', 'figure'),
-     Output('current-rssi-display', 'children')],
-    [Input('interval-component', 'n_intervals')]
+    [Output("rssi-graph", "figure"),
+     Output("last-value", "children")],
+    [Input("update-interval", "n_intervals")]
 )
 def update_graph(n):
-    # ... Lógica de criação do gráfico (Figura Plotly)
-    
-    current_rssi = data_rssi[-1] if data_rssi else "N/A"
-    display_text = f"RSSI Atual: {current_rssi} dBm"
+    if len(rssi_history) == 0:
+        return {
+            "data": [],
+            "layout": {"title": "Sem dados ainda..."}
+        }, "Aguardando dados MQTT..."
 
-    return fig, display_text
+    figure = {
+        "data": [{
+            "x": list(range(len(rssi_history))),
+            "y": list(rssi_history),
+            "type": "line",
+            "name": "RSSI"
+        }],
+        "layout": {
+            "title": "RSSI do ESP32 em Tempo Real",
+            "xaxis": {"title": "Leitura"},
+            "yaxis": {"title": "RSSI (dBm)"},
+        }
+    }
 
-if __name__ == '__main__':
-    app.run_server(debug=True, host='0.0.0.0')
+    last_value = f"Último RSSI recebido: {rssi_history[-1]} dBm"
 
+    return figure, last_value
+
+if _name_ == "_main_":
+    print("Iniciando dashboard em http://localhost:8050")
+    app.run(host="0.0.0.0", port=8050, debug=True)
 ```
 
-5. 🌡️ Matriz de Calor do Sinal (RSSI)
-Esta seção descreve a observação do gráfico do Dashboard durante os cenários de teste. O valor RSSI é expresso em dBm (decibéis em relação a 1 miliwatt), onde valores mais próximos de 0 (e, portanto, menos negativos) indicam um sinal mais forte.
+## Gráfico do sinal (RSSI)
 
-5.1. Teste Fora do Elevador (Ambiente Aberto)
+A análise do gráfico no dashboard permite observar como a intensidade do sinal Wi-Fi varia de acordo com o ambiente. O RSSI, medido em dBm, representa a força do sinal: valores menos negativos indicam maior intensidade.
 
-| Condição | RSSI Médio (dBm) | Variação (dBm) | Testes Realizados | Observação |
-| :---: | :---: | :---: | :---: | :---: |
-| Próximo ao Roteador | $[-40 \text{ a } -50]$ | Baixa ($\pm 2$) | O dispositivo foi posicionado em uma mesa a poucos metros do ponto de acesso Wi-Fi. | **Forte Sinal:** O gráfico apresenta uma linha estável e alta (próxima de $-40 \text{ dBm}$). Pequenas flutuações são devidas a ruído ambiental normal. |
-| Distante (Outra Sala) | $[-65 \text{ a } -75]$ | Média ($\pm 5$) | O dispositivo foi movido para uma sala separada por uma ou duas paredes. | **Sinal Moderado/Bom:** O valor de dBm diminuiu, mas permaneceu estável. |
+### Teste fora do elevador
 
-Teste Dentro do Elevador (Simulação Gaiola de Faraday)
+Quando o celular, que atuou como ponto de acesso, foi posicionado próximo ao ESP32, o RSSI manteve-se entre –40 e –52 dBm, indicando um sinal forte e estável. Quando o celular foi afastado apenas alguns centímetros, o valor caiu rapidamente para aproximadamente –80 a –90 dBm, demonstrando a sensibilidade imediata do sistema mesmo para deslocamentos muito pequenos.|
 
-| Condição | Início (dBm) | Queda Mínima (dBm) | Recuperação (dBm) | Testes Realizados | Observação |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| **Entrada no Elevador** | $[-55]$ | $[-90 \text{ a } -100]$ | $[-55]$ | O ESP32 foi levado para dentro do elevador do Inteli. A porta foi fechada e mantida assim por 5 segundos. | **Bloqueio Efetivo:** Houve uma queda **drástica** e **imediata** no RSSI. O gráfico exibe um pico negativo acentuado, demonstrando que a estrutura metálica do elevador bloqueou a maior parte das ondas de rádio. |
-| **Saída do Elevador** | $[-95]$ | N/A | $[-50 \text{ a } -60]$ | Após 5 segundos, a porta foi aberta e o ESP32 foi retirado do elevador. | **Recuperação Rápida:** O sinal recuperou-se quase instantaneamente, comprovando o efeito temporário do bloqueio e a capacidade do projeto de registrar a variação em tempo real. |
+### Teste dentro do elevador
 
+Ao levar o celular para dentro do elevador e fechar a porta, o comportamento do sinal tornou-se ainda mais evidente. Assim que o ambiente ficou isolado, o RSSI despencou até cerca de –82 dBm e permaneceu congelado nesse valor, sem novas atualizações.
 
-🎬 Descrição e Observações FinaisDescrição dos Testes:Os testes seguiram as etapas de Baseline (sinal forte), Teste de Distância (sinal moderado) e a Simulação da Gaiola de Faraday no elevador. O sistema ESP32/MQTT forneceu dados contínuos para o Dashboard em Python, permitindo a visualização imediata dos efeitos ambientais no sinal Wi-Fi.Observação Feita:A observação mais significativa foi a validação do princípio da Gaiola de Faraday. O gráfico da dashboard registrou claramente que, no momento exato em que a estrutura metálica do elevador foi fechada, o valor do RSSI despencou (movendo-se para perto de $-95\text{ dBm}$). A queda é um registro da atenuação do campo eletromagnético. A medição subiu de forma quase instantânea ao seu valor inicial assim que o dispositivo foi retirado do ambiente blindado, confirmando a capacidade do projeto de monitorar variações de rádio frequência em tempo real.
+Esse travamento indica que a estrutura metálica do elevador bloqueou completamente o sinal Wi-Fi, impedindo que novas leituras fossem enviadas ao dashboard. Na prática, o ESP32 perdeu comunicação com o ponto de acesso, e o gráfico só voltou a ser atualizado quando o celular saiu do elevador, momento em que o sinal retornou e a transmissão foi restabelecida.
+
+## Vídeo de demonstração
+
+O vídeo terá como finalidade ilustrar, de forma prática, o comportamento do sistema durante o experimento. Ele mostrará a leitura contínua do RSSI no dashboard, seguida do momento em que o celular entra no elevador, ponto em que o gráfico cai para cerca de –82 dBm e permanece congelado devido à perda completa de comunicação. Ao retirar o celular do elevador, o vídeo exibirá também o retorno imediato das atualizações, evidenciando de maneira visual o efeito de isolamento eletromagnético e a precisão do sistema em detectar essa interrupção.
+
+<p>
+    Vídeo de demonstração <br>
+    <a href="https://drive.google.com/file/d/12tj3jiiKhlV9PKuPZEOc9q6MpBLOvz_g/view?usp=sharing" target="_blank">
+        Clique para abrir o vídeo no Google Drive
+    </a>
+</p>
+
+## Conclusão
+
+Os testes realizados, incluindo o cenário de Baseline, o teste de distância e a simulação da Gaiola de Faraday no elevador, demonstraram a eficácia do sistema composto por ESP32, MQTT e dashboard em Python na análise em tempo real da intensidade do sinal Wi-Fi.
+
+A queda abrupta do RSSI ao fechar a estrutura metálica do elevador, aproximando-se de –95 dBm, confirmou o comportamento esperado de uma Gaiola de Faraday, evidenciando a atenuação significativa do campo eletromagnético. A recuperação imediata do sinal ao remover o dispositivo do ambiente blindado reforça a sensibilidade e precisão do monitoramento.
+
+De forma geral, o experimento validou plenamente a capacidade do projeto de captar e visualizar variações de radiofrequência de maneira contínua, confiável e responsiva.
